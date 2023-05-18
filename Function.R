@@ -8,9 +8,8 @@ library(dynlm)
 library(tseries)
 library(ForecastComb)
 
-
-try(load(url("https://github.com/zhentaoshi/Econ5821/raw/main/data_example/dataset_inf.Rdata")))#sometime it cannot be openned
 try(load("dataset_inf.Rdata"))
+try(load(url("https://github.com/zhentaoshi/Econ5821/raw/main/data_example/dataset_inf.Rdata")))#sometime it cannot be openned
 
 infPred<-function(X=X,test_X=fake.testing.X){
   #get cpi and ppi of whole time series

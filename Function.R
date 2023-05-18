@@ -24,7 +24,7 @@ infPred<-function(X=X,test_X=fake.testing.X){
   pred_nn_cpi<-rep(0,30)
   for(i in 1:30){
     newdata<-ts(inf_cpi[1:(155+i)])
-    pred_nn_ppi[i]<-forecast(nnetar(newdata, decay=0.5, maxit=150,xreg = xreg[1:(155+i)]),h=1,xreg=t(xreg[156+i]))$mean
+    pred_nn_cpi[i]<-forecast(nnetar(newdata, decay=0.5, maxit=150,xreg = xreg[1:(155+i)]),h=1,xreg=t(xreg[156+i]))$mean
   }
   #get arima forecast for cpi inflation
   pred_arima_cpi<-rep(0,30)

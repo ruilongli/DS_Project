@@ -13,4 +13,5 @@ values as its forecast of inflation rates according to PPI." Tomorrow we will ru
 7. test_data_results file. It is only about the results for real test data, using codes from Function.R file. You may looked at it for the most informative results on test data.
 
 *you might noticed that we did not report all results in the summary table. that's because we only reported the method gives out of sample R2 over 0.5 in validation set. 
+*you may also need to change the function for loading data as I loaded a local one as I cannot open the resorce from mainland directly 
 # Thank you very much for your grading!

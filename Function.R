@@ -1,3 +1,17 @@
+library(tidyverse)
+library(ggplot2)
+library(lessR)
+library(forecast)
+library(fable)
+library(glmnet)
+library(dynlm)
+library(tseries)
+library(ForecastComb)
+
+
+try(load(url("https://github.com/zhentaoshi/Econ5821/raw/main/data_example/dataset_inf.Rdata")))#sometime it cannot be openned
+try(load("dataset_inf.Rdata"))
+
 infPred<-function(X=X,test_X=fake.testing.X){
   #get cpi and ppi of whole time series
   CPI<-c(X[,67][[1]],test_X[,67][[1]])

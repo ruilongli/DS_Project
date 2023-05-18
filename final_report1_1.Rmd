@@ -1,0 +1,731 @@
+---
+title: "Inflation forecast-- Case study in China"
+author: "Ruilong Li, Shuting Lu,Yuxuan Meng "
+date: "2023-05-13"
+output: html_document
+---
+
+# Summary
+
+In this paper, we tried varied approach in forecasting inflation. Instead of forecasting on CPI/PPI and we forecaster the inflation directly by difference CPI/PPI at 12th order. We allied traditional time series method(naive, HW, Holt, ARIMA...) as well as some novel method in machine learning, such as feature selection using LASSO, PCA, and forecasting using neural network, RNN etc. We found that the inflation by difference is more smooth and less volatile, and gives higher out of sample R2. Among various methods, the combination model of ARIMA and NNET model gives the optimal out of sample R2 around 0.75 in CPI based inflation, and the ETS method gives out of sample R2 around 0.99 in PPI based inflation.
+
+# 1.introduction
+
+A constant challenge for governors is to produce accurate prediction of inflation, which is also of greatest importance to influence investment decisions of all economic agencies. However, achieving reliable forecast is difficult as it need to considering relevant factors while filtering irrelevant ones among millions macroeconomic variables. In this view, the emerging machine learning methods, are capable of doing such task, such as variable selection, incorporate with non-linear relationships in comparison with traditional econometric skills. The objective of this paper is to forecast Chinese inflation with 151 macroeconomic related features. Our goal is to compare and contrast on traditional econometric skill and machine learning skill in terms of out-of-sample performance.
+
+# 2. Methodology
+
+## 2.1 data splitting:
+
+We have 198 Observations in total, we firslty transform them into inflation with 12th difference, and we split them (186 obs) into 3 parts, training set(1-130th obs), validation set(130-156th obs), and the rest test set (157-186th obs).
+
+When doing model selection part, we calcultated the out of sample R2 as the criteria, and when calculate the predicted value in the validation set, we take all previous information and fit the model with all previous data. Then use the fitted model for one-step ahead forecasting. We interated this loop until we obtained all predictions for the validation set.
+
+In the last part when testing our model in test set, we follows similar steps to get the predicted value of test set observations and evaluate our results though out of sample R2.
+
+## 2.2 forecast method:
+
+In this paper, two approaches are adapted: taking Y as a singletime series and taking X together in terms of forecasting, we tried following methods:
+
+1.  taking only Y :
+
+The Naive Model:
+
+The Naive Model is a simple time series forecasting method that assumes the future values of a series will be equal to the most recent observed value. It is often used as a benchmark model in forecasting studies, including inflation forecasting (Chen et al., 2010; Gonzalez-Rivera et al., 2012). While it does not account for the underlying economic factors driving inflation, it provides a straightforward starting point for evaluating the performance of more sophisticated forecasting techniques in the context of inflation prediction.
+
+The Simple Exponential Smoothing (SES) Model:
+
+The SES Model is a method for time series forecasting.Its simplicity and computational efficiency make it particularly suitable for short-term inflation forecasting when the data exhibit little to no trend or seasonality. It has been applied in various studies on inflation forecasting, such as those conducted by Franses and Paap (2004) and Lima et al.(2020).
+
+The Holt-Winters (HW) Model:
+
+By incorporating components for trend and seasonality, the HW model offers a valuable tool for capturing the complex dynamics of inflation and generating accurate forecasts.Sollis and Rees (2003) employed the HW model to forecast inflation in the UK, while Cockerell and Roe (2004) utilized it for forecasting inflation in Australia.
+
+The Exponential Smoothing State Space (ETS) Model:
+
+The ETS Model is a versatile and adaptive approach to time series forecasting, capable of automatically selecting the appropriate model based on the characteristics of the data. With its adaptability and flexibility,the ETS model has been extensively used in inflation forecasting studies. Hyndman et al. (2002) applied the ETS framework to forecast inflation rates in Australia, and Kourentzes et al. (2014) utilized it for inflation forecasting in Greece.
+
+The Nonlinear Autoregressive (NNAR) Model:
+
+Inflation forecasting studies often recognize the importance of nonlinear relationships and employ models like the NNAR Model. Caner and Hansen (2004) utilized NNAR models to forecast inflation rates in various countries. By capturing nonlinear dependencies between past and future observations, NNAR models can provide a more nuanced understanding of inflation dynamics and improve forecast accuracy in the presence of nonlinear behavior.
+
+The Autoregressive Integrated Moving Average (ARIMA) Model:
+
+The ARIMA Model is widely used in inflation forecasting research due to its ability to capture both short-term and long-term dependencies in the data. Numerous studies have employed ARIMA models for inflation forecasting in different countries, such as those conducted by Stock and Watson (2007) for the United States and Castillo and Montoro (2012) for Chile. The ARIMA model's capability to incorporate lagged values and account for shocks makes it well-suited for modeling the underlying drivers of inflation and generating reliable forecasts.
+
+The Trigonometric Seasonal Decomposition of Time Series (TBATS) Model:
+
+The TBATS Model has gained attention in inflation forecasting studies due to its ability to handle multiple seasonal patterns. Ferreira and Rodrigues (2015) and Makridakis et al. (2018), have applied the TBATS model to forecast inflation rates, considering various seasonal frequencies that may exist in inflation data.
+
+Recurrent Neural Network (RNN) and Long Short-Term Memory (LSTM)
+
+RNNs are a class of artificial neural networks with recurrent neural networks and loops to itself. The structure of hidden layers serves as the memory of the network, which enables the RNNs structure to remember and process historical complex information for long time periods. To train a RNN, we need a training dataset of input-target pairs, and the objective is to minimize the loss function value by optimizing the weights of the network. LSTM is a specific type of RNN model, which is designed to reduce the problems of vanishing and exploding gradients used in the Back-Propagation (Hochreiter and Schmidhuber, 1997). Although there are already some successful applications of RNNs to macroeconomics time series data, some studies find that ML methods do not outperform standard statistical methods on average (Makridakis et al. (2018)), and ML methods are commonly blamed for their lack of interpretability.
+
+
+2.  Considering using X:
+
+Considering that we have a large number of variables in X compared with the number of observations, we try to exploit lasso and PCA method for variable selection and dimension reduction.
+
+The Least Absolute Shrinkage and Selection Operator (Lasso) Model:
+
+Lasso imposes l1-penalty on least square regression coefficients, which shrinks the irrelevant coefficients towards zero. The empirical risk function is given by:
+$min_{b\in R^p} \frac{1}{n} \sum_{i=1}^n(y_i-x_i^{'}b)^2 + \lambda\sum_{j=1}^p|b_j|$
+The choice of $\lambda$ is achieved by using k-fold cross validation approach. Marcelo C Medeiros et al. (2019) finds that ML methods including lasso are able to produce more accurate results in inflation forecasting than the standard benchmarks.
+
+Principal Component Analysis (PCA):
+
+PCA is a popular technique for dimension reduction of large datasets while remaining as much information as possible. It does so by generating new uncorrelated variables that successively maximize variance.
+
+
+Iterated Forecast: we simplified Banbura et al.(2013)'s literature with specifying the factor follows an stochastic process(i.e. arima). And then we make the forecast $f_{t+1}=\hat{\beta}\hat{X}_{t+1}|X_t$
+
+# 3. Empirical results using CPI
+
+```{r message=TRUE, warning=TRUE}
+library(tidyverse)
+library(ggplot2)
+library(lessR)
+library(forecast)
+library(fable)
+library(glmnet)
+library(dynlm)
+library(tseries)
+library(ForecastComb)
+
+
+try(load(url("https://github.com/zhentaoshi/Econ5821/raw/main/data_example/dataset_inf.Rdata")))#sometime it cannot be openned
+try(load("dataset_inf.Rdata"))
+R2OutOfSample<-function(y,y_hat){
+  r2<-1-var(y-y_hat)/var(y)
+  return(r2)
+}
+train_index<-1:130
+```
+
+## 3.1 Data
+
+Dependent variable: We calculated the inflation through two channels: 12th order difference through Consumer Product Index (CPI) or Producer Product Index(PPI).
+
+Independent Variable: Besides historical inflation data, related literature suggested variables related to finance (Forni et al., 2003),production (stock and Watson,1999), and expectation by survey (Faust and Wright, 2013) and others are helpful in inflation forecast. In this paper, 151 related monthly variables are included in our database.For the reason that the varibles are in type of difference value or return rate, here we will not perform other form of transformation.
+
+In order to ensure the stationary of the variables, we checked the stationary using KPSS test and take difference if needed.
+
+## 3.2 Time series with only inflation
+
+### 3.2.1 Traditional time series model
+
+Here we only used the inflation to perform standard time series analysis. The procedures are as follows:
+
+1.  Check the stationarity by visualization and standard test such as KPSS and ADF test. We also do some additional visualization for decide what model to use.
+
+```{r}
+inf_cpi<-diff(log(cpi$CPI),12)
+inf_cpi<-ts(inf_cpi,frequency = 12)
+autoplot(inf_cpi)
+acf(inf_cpi,lag.max = 50)
+pacf(inf_cpi,lag.max = 50)
+adf.test(inf_cpi)
+kpss.test(inf_cpi)
+```
+
+Through ADF test, we will reject the null hytopthesis that out data is not stationary,and consistant evidence are given by KPSS test. Here we suspect that out data contains some seasonality as shown by acf and pacf, so we plotted their seasonal effect:
+
+```{r}
+ggseasonplot(inf_cpi)
+```
+
+But there suggested that the seasonal effect was in a mess. In the end, we still need to test if the difference of the data is whote noise. If that's the case, it is not suitable for fitting time series model:
+
+```{r}
+Box.test(diff(inf_cpi), lag = 10, type = "Ljung")
+```
+
+2.  Fit them into models and compare them by cross validation with respect to RMSE
+
+```{r}
+#naive model
+e <- tsCV(inf_cpi, forecastfunction = naive, h = 1,initial = 120)
+print(mean(e^2,na.rm=T))
+#ses model
+e <- tsCV(inf_cpi, forecastfunction = ses, h = 1,initial = 120)
+print(mean(e^2,na.rm=T))
+#hw model
+e <- tsCV(inf_cpi, forecastfunction = hw, h = 1,initial = 120)
+print(mean(e^2,na.rm=T))
+#ets model
+fets <- function(y, h) {
+  forecast(ets(y), h = h)
+}
+e <- tsCV(inf_cpi, forecastfunction = fets, h = 1,initial = 120)
+print(mean(e^2,na.rm=T))
+
+# Fit a nnar model
+
+fnet <- function(x, h) {
+  forecast(nnetar(x, decay=0.5, maxit=150),h)
+}
+e <- tsCV(inf_cpi, forecastfunction = fnet, h = 1,initial = 120)
+print(mean(e^2,na.rm=T))
+
+#arima model
+farima <- function(x, h) {
+  forecast(arima(x,c(2,0,2),seasonal = list(order=c(2,0,1),frequency=12)),h=1)
+}
+e <- tsCV(inf_cpi, forecastfunction = farima, h = 1,initial = 120)
+print(mean(e^2,na.rm=T))
+
+#tbats model
+ftbats <- function(x, h) {
+    forecast(tbats(x),h)
+}
+e <- tsCV(inf_cpi, forecastfunction = ftbats, h = 1,initial = 120)
+print(mean(e^2,na.rm=T))
+```
+
+Here we found that only ARIMA model and nnar model has much smaller RMSE than NAIVE mode. We also check the robustness of this results by changing the parameter of initial as 100 or 140, or using windows by adding window parameter. The results are consistent. so we will only use those two model in the following steps.
+
+3.  Select the best 2 models and check the residuals if all possible information was captured
+
+```{r}
+model_nn<-nnetar(inf_cpi, decay=0.5, maxit=150)
+checkresiduals(model_nn)
+```
+
+For NNAR model, the residual still has some autocorrelation at order 12,24 and 36, and it cannot pass the white noise test(Ljung-Box with lag 24) test.
+
+```{r}
+model_arima<-arima(inf_cpi,c(2,0,2),seasonal = list(order=c(2,0,1),frequency=12))
+checkresiduals(model_arima)
+```
+
+In comparison with prior NNAR model, ARIMA model here performs better in terms of in sample fitting as its residuals has no autocorrelation as well as passed the white noise test.
+
+4.  Split the data into train and test set to evaluate the out of sample R2
+
+```{r}
+#arima model
+pred_arima<-rep(0,26)
+for(i in 1:26){
+  newdata<-inf_cpi[1:(129+i)]
+  newfit<-arima(newdata,c(2,0,2),seasonal = list(order=c(2,0,1),frequency=12))
+  pred_arima[i]<-predict(newfit,n.ahead =1)$pred
+}
+R2OutOfSample(inf_cpi[-train_index],pred_arima)
+```
+
+```{r}
+#so far nn gives best results!
+xreg = c(rep(0,60),rep(1,10),rep(0,156-70))
+pred_nn<-rep(0,26)
+for(i in 1:26){
+  newdata<-ts(inf_cpi[1:(129+i)])
+  pred_nn[i]<-forecast(nnetar(newdata, decay=0.5, maxit=150,xreg = xreg[1:(129+i)]),h=1,xreg=t(xreg[130+i]))$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_nn)
+
+```
+
+### 3.2.2 lets try forecast combination
+
+here we will firsly try to get forecast of all method listed above naive method
+
+```{r}
+pred_naive<-rep(0,26)
+for(i in 1:26){
+  newdata<-inf_cpi[1:(129+i)]
+  pred_naive[i]<-naive(newdata,h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_naive)
+
+```
+
+ses
+
+```{r}
+
+pred_ses<-rep(0,26)
+for(i in 1:26){
+  newdata<-inf_cpi[1:(129+i)]
+  pred_ses[i]<-ses(newdata,h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_ses)
+
+```
+
+HW method
+
+```{r}
+pred_hw<-rep(0,26)
+for(i in 1:26){
+  newdata<-ts(inf_cpi[1:(129+i)],frequency = 12)
+  pred_hw[i]<-hw(newdata,h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_hw)
+
+```
+
+Holt method
+
+```{r}
+pred_holt<-rep(0,26)
+for(i in 1:26){
+  newdata<-ts(inf_cpi[1:(129+i)],frequency = 12)
+  pred_holt[i]<-holt(newdata,h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_holt)
+
+```
+
+ets
+
+```{r}
+pred_ets<-rep(0,26)
+for(i in 1:26){
+  newdata<-ts(inf_cpi[1:(129+i)],frequency = 12)
+  pred_ets[i]<-forecast(ets(newdata),h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_ets)
+
+```
+
+tbats
+
+```{r}
+pred_tbats<-rep(0,26)
+for(i in 1:26){
+  newdata<-ts(inf_cpi[1:(129+i)],frequency = 12)
+  pred_tbats[i]<-forecast(tbats(newdata),h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_tbats)
+
+```
+
+let's firslt try to combine the two best model(arima, nnar)
+
+```{r}
+arima_m<-arima(inf_cpi[train_index],c(2,0,2),seasonal = list(order=c(2,0,1),frequency=12))
+nn_m<-nnetar(inf_cpi[train_index])
+insample<-na.omit(cbind(nn=nn_m$fitted,arima=fitted(arima_m)))
+fb<-foreccomb(inf_cpi[16:130],insample,inf_cpi[-train_index],cbind(pred_nn,pred_arima))
+weight<-comb_MED(fb)
+R2OutOfSample(inf_cpi[-train_index],weight$Forecasts_Test)
+```
+
+then let's try to combine all model
+
+```{r}
+naive_m<-naive(inf_cpi[train_index])
+ses_m<-ses(inf_cpi[train_index])
+holt_m<-holt(inf_cpi[train_index])
+ets_m<-ets(inf_cpi[train_index])
+tbats_m<-tbats(inf_cpi[train_index])
+
+insample<-na.omit(cbind(nn=nn_m$fitted,arima=fitted(arima_m),naive=naive_m$fitted,ses=ses_m$fitted,holt=holt_m$fitted,ets=ets_m$fitted,tbats=tbats_m$fitted))
+fb<-foreccomb(inf_cpi[16:130],insample,inf_cpi[-train_index],cbind(pred_nn,pred_arima,pred_naive,pred_ses,pred_holt,pred_ets,pred_tbats))
+weight<-comb_MED(fb)
+R2OutOfSample(inf_cpi[-train_index],weight$Forecasts_Test)
+```
+
+Nontheless, I tried all possible combinations, but the combination of 2 best predictors gives best out of sample R2 square
+
+Here we also tried all rest method in combination in this package and only reported the best results here.
+
+### 3.2.3 Recurrent Neural Network and LSTM model
+
+Please find the related file called "RNN.rmd" as I cannot install keras in my local computer so I used a cloud computing software to run that.
+
+Here the results are not really good(lower than 0.1 R2), we consider there might be two problem: 1. wrong network architecture, including number of hidden layer, number of unit in each layer, and form of activation function. Due to time limit,we will just stop our exploration here.
+
+## 3.3 Using X and Y together
+
+### 3.3.1 Seletion variable using LASSO
+
+```{r}
+data_cobined<-X[,-1]#here is to make X one lag behind the differnecd Y
+data_cobined<-as.data.frame(cbind(data_cobined,cpi$CPI))
+var_name<-paste0(rep("var",152),0:151)
+colnames(data_cobined)<-var_name
+data_cobined<-data_cobined|>
+  mutate(across(var1:var151, ~ lag(.,1),.names = "{.col}_lagged_1"))|>
+  mutate(across(var1:var151, ~ lag(.,2),.names = "{.col}_lagged_2"))
+data_cobined<-na.omit(data_cobined)
+
+```
+
+```{r}
+cv<-cv.glmnet(as.matrix(data_cobined[train_index,-c(1)]),as.matrix(data_cobined[train_index,1]))
+lasso<-glmnet(as.matrix(data_cobined[train_index,-c(1)]),as.matrix(data_cobined[train_index,1]),lambda = cv$lambda.1se)
+para<-as.data.frame(t(as.matrix(coef(lasso)))[,-1])
+sel_para<-rownames(para)[para!=0]
+selected_X<-data_cobined[,sel_para]
+
+selected<-data_cobined[,c("var0",sel_para)]
+ols<-lm(var0~.,data = selected[train_index,])
+summary(ols)
+```
+
+```{r}
+pred<-predict(ols,selected[-train_index,])
+R2OutOfSample(selected[-train_index,"var0"],pred)
+```
+
+```{r}
+rf<-randomForest::randomForest(x=selected[train_index,-1],y=selected[train_index,1],
+                          xtest=selected[-train_index,-1],ytest=selected[-train_index,1])
+rf
+```
+
+### 3.3.2 how about using PCA reduce dimention
+
+```{r}
+pca<-prcomp(X[train_index,])
+plot(pca)
+X_pca<-predict(pca,newdata=X)[,1:5]
+
+```
+
+```{r}
+data_cobined<-as.data.frame(cbind(cpi$CPI,X_pca))
+var_name<-paste0(rep("var",6),0:5)
+colnames(data_cobined)<-var_name
+data_cobined<-data_cobined|>
+  mutate(across(var1:var5, ~ lag(.,1),.names = "{.col}_lagged_1"))|>
+  mutate(across(var1:var5, ~ lag(.,2),.names = "{.col}_lagged_2"))
+data_cobined<-na.omit(data_cobined)
+ols<-lm(var0~.,data = data_cobined[train_index,])
+summary(ols)
+```
+
+There the PCA lasso cannot select ant element helpful even for in sample prediction so we just give this method up
+
+### 3.4iterated prediction method
+
+Here we found that the CPI is in so strong relationship with other X variables, so our thoughts are we firstly select those X that in strong relationship with Y, then predicting those X using time series method. In the end using Those predicted X to predict Y
+
+```{r}
+data<-cbind(cpi$CPI,X[,-1])
+var_name<-paste0(rep("var",152),0:151)
+colnames(data)<-var_name
+train_index<-1:130
+train_df<-data[train_index,]
+test_df<-data[-train_index,]
+cv<-cv.glmnet(as.matrix(data[train_index,-c(1,67)]),as.matrix(data[train_index,1]))
+lasso<-glmnet(as.matrix(data[train_index,-c(1,67)]),as.matrix(data[train_index,1]),lambda = cv$lambda.min)
+
+coef<-as.matrix(lasso$beta)
+para<-as.data.frame(t(as.matrix(coef(lasso)))[,-1])
+sel_para<-rownames(para)[para!=0]
+selected_X<-data[,sel_para]
+
+selected<-data[,c("var0",sel_para)]
+ols<-lm(var0~.,data = selected[train_index,])
+summary(ols)
+pred_x<-matrix(nrow = 38,ncol = ncol(selected_X))
+for(i in 1:ncol(selected_X)){
+  for(j in 1:38){
+  newdata<-selected_X[1:(129+j),i]
+  newfit<-auto.arima(newdata)
+  pred_x[j,i]<-forecast(newfit,h =1)$mean
+}
+} 
+newx<-as.data.frame(pred_x)
+colnames(newx)<-sel_para
+pred_Y<-predict(ols,newdata = newx)
+R2OutOfSample(cpi$CPI[-train_index],pred_Y)
+```
+
+## 3.4 Results for PPI based inflation
+
+Here we have tested different method and in this summary table, we will only report the approaches with R2 greater than 0.5 in the validation set and try to apply them using PPI and get their out of sample R2 in the test set.
+
+```{r}
+inf_ppi<-diff(ppi$PPI,12)
+xreg = c(rep(0,60),rep(1,10),rep(0,156-70))
+pred_nn<-rep(0,26)
+for(i in 1:26){
+  newdata<-ts(inf_ppi[1:(129+i)])
+  pred_nn[i]<-forecast(nnetar(newdata, decay=0.5, maxit=150,xreg = xreg[1:(129+i)]),h=1,xreg=t(xreg[130+i]))$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_nn)
+```
+
+```{r}
+pred_naive<-rep(0,26)
+for(i in 1:26){
+  newdata<-inf_ppi[1:(129+i)]
+  pred_naive[i]<-naive(newdata,h=1)$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_naive)
+```
+
+```{r}
+pred_ses<-rep(0,26)
+for(i in 1:26){
+  newdata<-inf_ppi[1:(129+i)]
+  pred_ses[i]<-ses(newdata,h=1)$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_ses)
+```
+
+```{r}
+pred_ets<-rep(0,26)
+for(i in 1:26){
+  newdata<-ts(inf_ppi[1:(129+i)],frequency = 12)
+  pred_ets[i]<-forecast(ets(newdata),h=1)$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_ets)
+```
+
+```{r}
+pred_tbats<-rep(0,26)
+for(i in 1:26){
+  newdata<-ts(inf_ppi[1:(129+i)],frequency = 12)
+  pred_tbats[i]<-forecast(tbats(newdata),h=1)$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_tbats)
+```
+
+```{r}
+#arima model
+pred_arima<-rep(0,26)
+for(i in 1:26){
+  newdata<-inf_ppi[1:(129+i)]
+  newfit<-arima(newdata,c(2,0,2),seasonal = list(order=c(2,0,0),frequency=12))
+  pred_arima[i]<-predict(newfit,n.ahead =1)$pred
+}
+R2OutOfSample(inf_ppi[-train_index],pred_arima)
+```
+
+let's firslt try to combine the two best model(arima, nnar)
+
+```{r}
+arima_m<-arima(inf_ppi[train_index],c(2,0,2),seasonal = list(order=c(2,0,1),frequency=12))
+nn_m<-nnetar(inf_ppi[train_index])
+insample<-na.omit(cbind(nn=nn_m$fitted,arima=fitted(arima_m)))
+fb<-foreccomb(inf_ppi[18:130],insample,inf_ppi[-train_index],cbind(pred_nn,pred_arima))
+weight<-comb_MED(fb)
+R2OutOfSample(inf_ppi[-train_index],weight$Forecasts_Test)
+```
+
+then let's try to combine all model
+
+```{r}
+naive_m<-naive(inf_ppi[train_index])
+ses_m<-ses(inf_ppi[train_index])
+ets_m<-ets(inf_ppi[train_index])
+tbats_m<-tbats(inf_ppi[train_index])
+
+insample<-na.omit(cbind(nn=nn_m$fitted,arima=fitted(arima_m),naive=naive_m$fitted,ses=ses_m$fitted,ets=ets_m$fitted,tbats=tbats_m$fitted))
+fb<-foreccomb(inf_ppi[18:130],insample,inf_ppi[-train_index],cbind(pred_nn,pred_arima,pred_naive,pred_ses,pred_ets,pred_tbats))
+weight<-comb_MED(fb)
+R2OutOfSample(inf_ppi[-train_index],weight$Forecasts_Test)
+```
+
+# 3.5 summary results
+Here we summarized the out of sample R2 performance using the validation set
+
+|               | CPI based | PPI based |
+|---------------|-----------|-----------|
+| ARIMA         | 0.68      | 0.98      |
+| NNAR          | 0.72      | 0.97      |
+| NAIVE         | 0.55      | 0.96      |
+| SES           | 0.55      | 0.96      |
+| ETS           | 0.52      | 0.99      |
+| TBATS         | 0.53      | 0.98      |
+| Combine(best) | 0.75      | 0.97      |
+| Combine(All)  | 0.72      | 0.97      |
+
+# 4.resuls in test set
+
+First we nneed to concatenate the whole time series of CPI and PPI
+
+```{r}
+CPI<-c(cpi$CPI,fake.testing.X[,67][[1]])
+PPI<-c(ppi$PPI,fake.testing.X[,72][[1]])
+inf_cpi<-diff(CPI,12)
+inf_ppi<-diff(PPI,12)
+train_index<-1:156
+
+```
+
+then do the process in PPI
+
+```{r}
+xreg = c(rep(0,60),rep(1,10),rep(0,186-70))
+pred_nn<-rep(0,30)
+for(i in 1:30){
+  newdata<-ts(inf_ppi[1:(155+i)])
+  pred_nn[i]<-forecast(nnetar(newdata, decay=0.5, maxit=150,xreg = xreg[1:(155+i)]),h=1,xreg=t(xreg[156+i]))$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_nn)
+```
+
+```{r}
+pred_naive<-rep(0,30)
+for(i in 1:30){
+  newdata<-inf_ppi[1:(155+i)]
+  pred_naive[i]<-naive(newdata,h=1)$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_naive)
+```
+
+```{r}
+pred_ses<-rep(0,30)
+for(i in 1:30){
+  newdata<-inf_ppi[1:(155+i)]
+  pred_ses[i]<-ses(newdata,h=1)$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_ses)
+```
+
+```{r}
+pred_ets<-rep(0,30)
+for(i in 1:30){
+  newdata<-ts(inf_ppi[1:(155+i)],frequency = 12)
+  pred_ets[i]<-forecast(ets(newdata),h=1)$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_ets)
+```
+
+```{r}
+pred_tbats<-rep(0,30)
+for(i in 1:30){
+  newdata<-ts(inf_ppi[1:(155+i)],frequency = 12)
+  pred_tbats[i]<-forecast(tbats(newdata),h=1)$mean
+}
+R2OutOfSample(inf_ppi[-train_index],pred_tbats)
+```
+
+```{r}
+#arima model
+pred_arima<-rep(0,30)
+for(i in 1:30){
+  newdata<-inf_ppi[1:(155+i)]
+  newfit<-arima(newdata,c(2,0,2),seasonal = list(order=c(2,0,0),frequency=12))
+  pred_arima[i]<-predict(newfit,n.ahead =1)$pred
+}
+R2OutOfSample(inf_ppi[-train_index],pred_arima)
+```
+
+```{r}
+arima_m<-arima(inf_ppi[train_index],c(2,0,2),seasonal = list(order=c(2,0,1),frequency=12))
+nn_m<-nnetar(inf_ppi[train_index])
+insample<-na.omit(cbind(nn=nn_m$fitted,arima=fitted(arima_m)))
+fb<-foreccomb(inf_ppi[6:156],insample,inf_ppi[-train_index],cbind(pred_nn,pred_arima))
+weight<-comb_MED(fb)
+R2OutOfSample(inf_ppi[-train_index],weight$Forecasts_Test)
+```
+
+```{r}
+naive_m<-naive(inf_ppi[train_index])
+ses_m<-ses(inf_ppi[train_index])
+ets_m<-ets(inf_ppi[train_index])
+tbats_m<-tbats(inf_ppi[train_index])
+
+insample<-na.omit(cbind(nn=nn_m$fitted,arima=fitted(arima_m),naive=naive_m$fitted,ses=ses_m$fitted,ets=ets_m$fitted,tbats=tbats_m$fitted))
+fb<-foreccomb(inf_ppi[6:156],insample,inf_ppi[-train_index],cbind(pred_nn,pred_arima,pred_naive,pred_ses,pred_ets,pred_tbats))
+weight<-comb_MED(fb)
+R2OutOfSample(inf_ppi[-train_index],weight$Forecasts_Test)
+```
+
+CPI forecasting
+
+```{r}
+xreg = c(rep(0,60),rep(1,10),rep(0,186-70))
+pred_nn<-rep(0,30)
+for(i in 1:30){
+  newdata<-ts(inf_cpi[1:(155+i)])
+  pred_nn[i]<-forecast(nnetar(newdata, decay=0.5, maxit=150,xreg = xreg[1:(155+i)]),h=1,xreg=t(xreg[156+i]))$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_nn)
+```
+
+```{r}
+pred_naive<-rep(0,30)
+for(i in 1:30){
+  newdata<-inf_cpi[1:(155+i)]
+  pred_naive[i]<-naive(newdata,h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_naive)
+```
+
+```{r}
+pred_ses<-rep(0,30)
+for(i in 1:30){
+  newdata<-inf_cpi[1:(155+i)]
+  pred_ses[i]<-ses(newdata,h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_ses)
+```
+
+```{r}
+pred_ets<-rep(0,30)
+for(i in 1:30){
+  newdata<-ts(inf_cpi[1:(155+i)],frequency = 12)
+  pred_ets[i]<-forecast(ets(newdata),h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_ets)
+```
+
+```{r}
+pred_tbats<-rep(0,30)
+for(i in 1:30){
+  newdata<-ts(inf_cpi[1:(155+i)],frequency = 12)
+  pred_tbats[i]<-forecast(tbats(newdata),h=1)$mean
+}
+R2OutOfSample(inf_cpi[-train_index],pred_tbats)
+```
+
+```{r}
+#arima model
+pred_arima<-rep(0,30)
+for(i in 1:30){
+  newdata<-inf_cpi[1:(155+i)]
+  newfit<-arima(newdata,c(2,0,2),seasonal = list(order=c(2,0,0),frequency=12))
+  pred_arima[i]<-predict(newfit,n.ahead =1)$pred
+}
+R2OutOfSample(inf_cpi[-train_index],pred_arima)
+```
+
+```{r}
+arima_m<-arima(inf_cpi[train_index],c(2,0,2),seasonal = list(order=c(2,0,1),frequency=12))
+nn_m<-nnetar(inf_cpi[train_index])
+insample<-na.omit(cbind(nn=nn_m$fitted,arima=fitted(arima_m)))
+fb<-foreccomb(inf_ppi[16:156],insample,inf_ppi[-train_index],cbind(pred_nn,pred_arima))
+weight<-comb_MED(fb)
+R2OutOfSample(inf_cpi[-train_index],weight$Forecasts_Test)
+```
+
+```{r}
+naive_m<-naive(inf_cpi[train_index])
+ses_m<-ses(inf_cpi[train_index])
+ets_m<-ets(inf_cpi[train_index])
+tbats_m<-tbats(inf_cpi[train_index])
+
+insample<-na.omit(cbind(nn=nn_m$fitted,arima=fitted(arima_m),naive=naive_m$fitted,ses=ses_m$fitted,ets=ets_m$fitted,tbats=tbats_m$fitted))
+fb<-foreccomb(inf_cpi[16:156],insample,inf_cpi[-train_index],cbind(pred_nn,pred_arima,pred_naive,pred_ses,pred_ets,pred_tbats))
+weight<-comb_MED(fb)
+R2OutOfSample(inf_cpi[-train_index],weight$Forecasts_Test)
+```
+
+
+# reference
+Caner, M., Hansen, B.E., 2004. Instrumental variable estimation of a nonlinear threshold model. Econometric Theory 20 (5), 813-843.
+Castillo, M., Montoro, C., 2012. Inflation forecasting using a random walk with drift. International Journal of Forecasting 28 (2), 295-306.
+Chen, C.-H., Lee, C.-C., Lee, Y.-H., 2010. Forecasting the output gap using the stochastic cycle extractor. Journal of Macroeconomics 32 (4), 1130-1141.
+Cockerell, L., Roe, A., 2004. Inflation and the economic performance of selected industrial countries. Journal of Macroeconomics 26 (3), 435-454.
+Faust, J., Wright, J.H., 2013. Forecasting inflation. Handbook of economic forecasting. Elsevier B.V.. Vol. 2A, Chapter 1, 3-56. Ed.
+Ferreira, D., Rodrigues, P., 2015. Forecasting electricity prices with factor models: On the importance of capturing long-term dynamics. Energy Economics 52 (A), 175-187.
+Forni, M., Hallin, M., Lippi, M., Reichlin, L., 2003. Do financial variables help forecasting inflation and real activity in the euro area? J Monet Econ 50 (6), 1243–1255.
+Franses, P.H., Paap, R., 2004. Forecasting with exponential smoothing: Some guidelines for model selection. International Journal of Forecasting 20 (3), 385-393.
+Gonzalez-Rivera, G., In, F., Lee, T.H., 2012. Non-linear time series and neural-network models of exchange rates between the US dollar and major currencies. Journal of Forecasting 31 (7), 579-601.
+Hyndman, R.J., Koehler, A.B., Snyder, R.D., Grose, S., 2002. A state space framework for automatic forecasting using exponential smoothing methods. International Journal of Forecasting 18 (3), 439-454.
+Hochreiter, Sepp, and Jürgen Schmidhuber. (1997) “Long Short-Term Memory”, Neural Computation 9(8): 1735–1780
+Kourentzes, N., Barrow, D.K., Crone, S.F., 2014. Neural network ensemble operators for time series forecasting. Expert Systems with Applications 41 (9), 4235-4244.
+Lima, L.R., Fernandes, A.S., Ferreira, P.M., 2020. Modeling and forecasting inflation in Angola using unobserved components models. Empirical Economics 59 (2), 635-657.
+Makridakis, S., Spiliotis, E., Assimakopoulos, V., 2018. The M4 Competition: 100,000 time series and 61 forecasting methods. International Journal of Forecasting 36 (1), 54-74.
+Makridakis, S., Spiliotis, E., & Assimakopoulos, V. (2018). Statisticaland machine learning forecasting methods: Concerns and waysforward.PloS one,13(3), e0194889.
+Medeiros, Marcelo & Vasconcelos, Gabriel & Veiga, Alvaro & Zilberman, Eduardo. (2019). Forecasting Inflation in a Data-Rich Environment: The Benefits of Machine Learning Methods. Journal of Business & Economic Statistics. 39. 1-45. 
+Sollis, R., Rees, P., 2003. Modelling the fiscal reaction functions of the G3. Journal of Forecasting 22 (4), 293-312.
+Stock, J., Watson, M., 1999. Forecasting inflation. J Monet Econ 44 (2), 293–335.
+Stock, J.H., Watson, M.W., 2007. Why has US inflation become harder to forecast? Journal of Money, Credit and Banking 39 (s1), 3-33.
